@@ -85,3 +85,14 @@ This project supports Alexander's positioning around:
 - CI/CD quality gates;
 - Android/backend/API testing;
 - keeping scope small enough to finish and demo.
+
+## Planning docs
+
+Detailed planning material lives under `my-specs/docs/`:
+
+- `my-specs/docs/Product brief.md` — MVP capabilities, data model, non-goals.
+- `my-specs/docs/Architecture notes.md` — planned repo layout, backend/Android design, testing, CI/CD, deployment.
+- `my-specs/docs/Implementation notes.md` — stack specifics, first implementation slice, scope guardrails.
+- `my-specs/docs/Roadmap.md` — phased plan and per-phase verification.
+
+`Dashboard.md` (repo root) tracks current status, key decisions, and open questions.

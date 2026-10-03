@@ -10,12 +10,14 @@ It is now a git repo on GitHub: `joemast/shared-shopping-list-mobile` (private, 
 
 Read the relevant file before acting; they overlap but each owns a topic:
 
-- `Dashboard.md` — current status, key decisions, open questions.
-- `Product brief.md` — MVP capabilities, data model, non-goals.
-- `Architecture notes.md` — planned repo layout, backend/Android design, testing strategy, CI/CD, VPS deployment.
-- `Implementation notes.md` — stack specifics, first implementation slice (build order), scope guardrails.
-- `Roadmap.md` — phased plan and per-phase verification.
-- `README.md` — product framing and interview positioning.
+- `Dashboard.md` — current status, key decisions, open questions (repo root).
+- `my-specs/docs/Product brief.md` — MVP capabilities, data model, non-goals.
+- `my-specs/docs/Architecture notes.md` — planned repo layout, backend/Android design, testing strategy, CI/CD, VPS deployment.
+- `my-specs/docs/Implementation notes.md` — stack specifics, first implementation slice (build order), scope guardrails.
+- `my-specs/docs/Roadmap.md` — phased plan and per-phase verification.
+- `README.md` — product framing and interview positioning (repo root).
+
+The remaining docs live under `my-specs/docs/`; `AGENTS.md`, `README.md`, and `Dashboard.md` stay in the repo root.
 
 Status: idea captured, nothing implemented. Docs describe the target, not current reality.
 
@@ -43,7 +45,7 @@ Per `Dashboard.md`, current recommendations are SQLModel and Retrofit; "recommen
 
 ## Build order (when implementation starts)
 
-Follow the first slice in `Implementation notes.md`: backend `/health` + pytest → list/item models and CRUD tests → Dockerfile/Compose → backend CI → Android skeleton → Retrofit/repository → ViewModel tests → Android CI → VPS deploy script + smoke check. Do not start Android UI polish before backend API and CI are stable.
+Follow the first slice in `my-specs/docs/Implementation notes.md`: backend `/health` + pytest → list/item models and CRUD tests → Dockerfile/Compose → backend CI → Android skeleton → Retrofit/repository → ViewModel tests → Android CI → VPS deploy script + smoke check. Do not start Android UI polish before backend API and CI are stable.
 
 ## Gotchas worth remembering
 

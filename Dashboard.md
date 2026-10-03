@@ -37,9 +37,11 @@ This project supports a professional profile around:
 ## Initial documents
 
 - `README.md`
-- `Product brief.md`
-- `Architecture notes.md`
-- `Roadmap.md`
+- `Dashboard.md`
+- `my-specs/docs/Product brief.md`
+- `my-specs/docs/Architecture notes.md`
+- `my-specs/docs/Implementation notes.md`
+- `my-specs/docs/Roadmap.md`
 
 ## Interview angle
 
