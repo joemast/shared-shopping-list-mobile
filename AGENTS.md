@@ -2,9 +2,9 @@
 
 ## What this repo is
 
-Planning/notes repository only. It contains **no source code, no package manifests, no build or test tooling, and is not a git repo**. Do not run `npm`/`gradle`/`pytest`, do not look for an app entrypoint, and do not assume the planned stack already exists.
+Planning/notes repository only. It contains **no source code, no package manifests, and no build or test tooling**. Do not run `npm`/`gradle`/`pytest`, do not look for an app entrypoint, and do not assume the planned stack already exists.
 
-The actual implementation is expected in a **separate repository** (preferred name: `shared-shopping-list`). This directory is the idea/design capture.
+It is now a git repo on GitHub: `joemast/shared-shopping-list-mobile` (private, default branch `main`, remote `origin` over SSH). Only planning docs exist so far.
 
 ## Source-of-truth docs
 

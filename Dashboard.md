@@ -2,9 +2,9 @@
 
 ## Current status
 
-Project status: Idea captured
+Project status: Planning repo created
 
-Current status description: The project idea has been saved as a professional pet project. No implementation repository has been created yet.
+Current status description: The planning docs live in a private GitHub repository (`joemast/shared-shopping-list-mobile`). No implementation code (backend or Android) exists yet.
 
 ## Summary
 
@@ -49,7 +49,7 @@ The app itself is not the point. The useful story is:
 
 ## Open questions
 
-- Should the implementation repository be public from the start or private until MVP is ready?
+- ~~Should the implementation repository be public from the start or private until MVP is ready?~~ Resolved: private (repo `joemast/shared-shopping-list-mobile`).
 - Should the backend use SQLModel for faster MVP delivery, or SQLAlchemy directly for more explicit control? Current recommendation: SQLModel for MVP.
 - Should Android use Retrofit or Ktor client? Current recommendation: Retrofit for a straightforward REST API demo.
 - Which public URL/subdomain should be used for the VPS-hosted backend?
@@ -57,8 +57,8 @@ The app itself is not the point. The useful story is:
 
 ## Suggested next steps
 
-1. Decide repository name and visibility.
-2. Create implementation repository.
+1. ~~Decide repository name and visibility.~~ Done: `shared-shopping-list-mobile`, private.
+2. ~~Create implementation repository.~~ Planning repo created; implementation code still to come.
 3. Add backend skeleton and tests first.
 4. Add Android skeleton and first screen.
 5. Add CI workflows.
