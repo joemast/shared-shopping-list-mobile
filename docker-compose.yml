@@ -1,0 +1,29 @@
+# Local dev/test harness for the Shared Shopping List MVP.
+#
+# Container-first (AC41): every local backend build/test command runs through
+# Docker / Docker Compose. No host Python toolchain is required.
+#
+#   docker compose up backend
+#   docker compose run --rm backend-test pytest
+#   docker compose run --rm backend-test sh -c "ruff check . && ruff format --check ."
+#
+# Environment values are read from the root `.env` file (see `.env.example`)
+# with safe defaults when it is absent. No Compose profiles are used.
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite:///./data/app.db}
+    volumes:
+      - ./data:/app/data
+
+  backend-test:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite:///./data/app.db}
+    working_dir: /app
+    command: sh -c "ruff check . && ruff format --check . && pytest"
