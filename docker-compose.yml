@@ -18,7 +18,21 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL:-sqlite:///./data/app.db}
     volumes:
+      # Bind-mount (AC14/AC41): the SQLite file lands in ./data on the host so
+      # it survives container restarts and rebuilds.
       - ./data:/app/data
+    healthcheck:
+      # Codifies the runtime `GET /health` check (AC15) using the image's own
+      # Python, so no extra tooling (e.g. curl) is baked into the runtime image.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   backend-test:
     build:
