@@ -17,5 +17,22 @@ dist/
 # Environment / secrets
 .env
 
-# SQLite data volume
-data/
+# SQLite data volume (repo root only — must not ignore Android's data/ package)
+/data/
+
+# Gradle / Android
+.gradle/
+local.properties
+*.apk
+*.aab
+*.hprof
+captures/
+.cxx/
+.externalNativeBuild/
+*.iml
+.idea/
+kotlin-js-store/
+
+# JVM crash dumps / transient build logs
+hs_err_pid*.log
+*.log

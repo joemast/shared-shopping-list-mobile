@@ -1,0 +1,15 @@
+# Keep the android-build image context tiny: the repo is bind-mounted at run time,
+# so build outputs and local caches must never be sent to the Docker daemon.
+.gradle/
+build/
+app/build/
+*/build/
+local.properties
+captures/
+.cxx/
+.externalNativeBuild/
+*.apk
+*.aab
+*.iml
+.idea/
+.DS_Store
