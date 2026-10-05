@@ -1,0 +1,147 @@
+# Android quality gate (Stage 7 / build step 10, AC25/AC26/AC39/AC40/AC42).
+#
+# Two independent jobs, split so the fast JVM feedback loop is not blocked by the
+# slow emulator boot (R11):
+#
+#   unit     - JVM unit tests + debug APK build + `demo-apk` artifact (fast, no emulator).
+#   ui-tests - instrumented Compose UI suite on a pinned Android emulator, run under KVM.
+#
+# `connectedDebugAndroidTest` runs ONLY in the `ui-tests` job: this is the single
+# place the instrumented suite executes (AC42). The `unit` job (and every local
+# `android-build` run) only *compiles* the suite via `assembleDebugAndroidTest`.
+# The `ui-tests` job is intended to be a required, merge-blocking check (AC40).
+#
+# Emulator image is pinned to the app compileSdk/targetSdk (34) per OQ-14.
+#
+# Local equivalent (AC41), run from the repository root on Docker Desktop only:
+#   docker compose run --rm android-build ./gradlew testDebugUnitTest assembleDebug
+#   docker compose run --rm android-build ./gradlew assembleDebugAndroidTest   # compile only
+name: Android
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: android-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Fast gate: JVM unit tests + debug APK artifact. No emulator, no KVM.
+  unit:
+    name: JVM unit tests & debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          # Gradle dependency + wrapper cache (R19 local equivalent is the
+          # persistent `gradle-cache` volume in the android-build container).
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        working-directory: android
+        run: chmod +x ./gradlew
+
+      - name: Run JVM unit tests and assemble debug APK
+        working-directory: android
+        run: ./gradlew testDebugUnitTest assembleDebug --no-daemon
+
+      - name: Upload debug APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  # Slow gate: the instrumented UI suite. This is the ONLY place
+  # `connectedDebugAndroidTest` executes (AC42). Separate and merge-blocking (AC40).
+  ui-tests:
+    name: Instrumented UI tests (emulator)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Enable KVM
+        # Required by ReactiveCircus/android-emulator-runner for hardware
+        # acceleration on GitHub-hosted runners. Without this the emulator falls
+        # back to a slow/no software path and the job can time out.
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Grant execute permission for gradlew
+        working-directory: android
+        run: chmod +x ./gradlew
+
+      # AVD snapshot cache: skips re-provisioning the system image on warm runs (R11).
+      - name: AVD cache
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ runner.os }}-34-google_apis-x86_64
+
+      - name: Create AVD and generate snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          working-directory: android
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          emulator-boot-timeout: 600
+          script: echo "Generated AVD snapshot for caching."
+
+      - name: Run instrumented UI tests
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          working-directory: android
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          emulator-boot-timeout: 600
+          script: ./gradlew connectedDebugAndroidTest --no-daemon
+
+      - name: Upload instrumented test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: connected-test-reports
+          path: |
+            android/app/build/reports/androidTests/
+            android/app/build/outputs/androidTest-results/
+          if-no-files-found: ignore
+          retention-days: 14
