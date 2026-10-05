@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+      Debug-only manifest. The androidx.compose.ui:ui-test-manifest dependency
+      (debugImplementation) contributes the Compose test activity here; this file
+      exists as the explicit debug-variant hook for the instrumented UI suite.
+    -->
+    <application />
+</manifest>

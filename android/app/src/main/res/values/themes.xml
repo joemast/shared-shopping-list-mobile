@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Minimal host theme for the Compose activity. The UI itself is rendered by
+      Jetpack Compose + Material 3, so a framework Material theme is enough and
+      keeps the MVP free of an XML Material Components dependency.
+    -->
+    <style name="Theme.SharedShoppingList" parent="@android:style/Theme.Material.Light.NoActionBar" />
+</resources>

@@ -1,0 +1,96 @@
+# Backend quality gate (Stage 3 / build step 5, AC24/AC27/AC28).
+#
+# Runs on every pull request and on pushes to `main`. It performs the same
+# assertions as the local `backend-test` Compose service (AC41) natively on the
+# runner, then builds the runtime image and proves it actually starts by hitting
+# `GET /health` (OQ-5 decision: build + run + health, not build-only).
+#
+# Local equivalent (AC41), run from the repository root:
+#   docker compose run --rm backend-test sh -c "ruff check . && ruff format --check . && pytest"
+name: Backend
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: backend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Lint, pytest & Docker build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Install backend with dev tools
+        # Mirrors the dependency set installed into the `backend-test` image.
+        run: pip install -e "backend[dev]"
+
+      - name: Lint (ruff check)
+        working-directory: backend
+        run: ruff check .
+
+      - name: Format check (ruff format --check)
+        working-directory: backend
+        run: ruff format --check .
+
+      - name: Run pytest
+        working-directory: backend
+        run: pytest
+
+      - name: Export OpenAPI schema (optional artifact)
+        working-directory: backend
+        run: |
+          python -c "import json; from app.main import app; print(json.dumps(app.openapi(), indent=2))" > "${RUNNER_TEMP}/openapi.json"
+
+      - name: Upload OpenAPI schema artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-openapi
+          path: ${{ runner.temp }}/openapi.json
+          if-no-files-found: error
+
+      - name: Build backend Docker image
+        run: docker build --tag shared-shopping-list-backend ./backend
+
+      - name: Run image and assert GET /health
+        # OQ-5: a broken startup must fail the PR. Bounded retry (30 x 2s = 60s)
+        # so we wait for the server to come up without hanging the job.
+        run: |
+          set -euo pipefail
+          docker run --detach --name backend-ci --publish 8000:8000 shared-shopping-list-backend
+          code=""
+          body=""
+          for attempt in $(seq 1 30); do
+            code=$(curl --silent --output /tmp/health.json --write-out '%{http_code}' http://localhost:8000/health || true)
+            body=$(cat /tmp/health.json 2>/dev/null || true)
+            if [ "$code" = "200" ] && [ "$body" = '{"status":"ok"}' ]; then
+              echo "GET /health -> HTTP 200 $body (after ${attempt} attempt(s))"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::GET /health did not return HTTP 200 + {\"status\":\"ok\"} within 60s (last: HTTP ${code} ${body})"
+          docker logs backend-ci || true
+          exit 1
+
+      - name: Stop backend container
+        if: always()
+        run: docker rm --force backend-ci || true

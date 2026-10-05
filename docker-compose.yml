@@ -1,0 +1,72 @@
+# Local dev/test harness for the Shared Shopping List MVP.
+#
+# Container-first (AC41): every local backend build/test command runs through
+# Docker / Docker Compose. No host Python toolchain is required.
+#
+#   docker compose up backend
+#   docker compose run --rm backend-test pytest
+#   docker compose run --rm backend-test sh -c "ruff check . && ruff format --check ."
+#
+# Environment values are read from the root `.env` file (see `.env.example`)
+# with safe defaults when it is absent. No Compose profiles are used.
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite:///./data/app.db}
+    volumes:
+      # Bind-mount (AC14/AC41): the SQLite file lands in ./data on the host so
+      # it survives container restarts and rebuilds.
+      - ./data:/app/data
+    healthcheck:
+      # Codifies the runtime `GET /health` check (AC15) using the image's own
+      # Python, so no extra tooling (e.g. curl) is baked into the runtime image.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  backend-test:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite:///./data/app.db}
+    working_dir: /app
+    command: sh -c "ruff check . && ruff format --check . && pytest"
+
+  # Android build/test toolchain (NOT a runtime, NO emulator).
+  #
+  #   docker compose build android-build
+  #   docker compose run --rm android-build ./gradlew assembleDebug
+  #   docker compose run --rm android-build ./gradlew testDebugUnitTest
+  #   docker compose run --rm android-build ./gradlew lintDebug
+  #   docker compose run --rm android-build ./gradlew assembleDebugAndroidTest   # COMPILE UI tests only
+  #
+  # UI-test execution (`connectedDebugAndroidTest`) is CI-only (Ubuntu + KVM);
+  # Docker Desktop on macOS has no KVM, so the suite is compiled here, never run here.
+  #
+  # platform linux/amd64 is the OQ-16 fallback (Google ships no linux/aarch64 SDK);
+  # Docker Desktop runs it at effectively native speed on this M1 host.
+  android-build:
+    build:
+      context: ./android
+    platform: linux/amd64
+    working_dir: /workspace/android
+    volumes:
+      # Bind-mount the whole repo so Gradle reads the project and writes build
+      # outputs back to the host checkout.
+      - .:/workspace
+      # Named volume: persists the Gradle home (deps + wrapper dists) between runs
+      # so `docker compose run --rm` never re-downloads everything (R19).
+      - gradle-cache:/root/.gradle
+
+volumes:
+  gradle-cache:
