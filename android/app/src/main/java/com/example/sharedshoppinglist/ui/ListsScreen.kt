@@ -30,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -113,6 +114,7 @@ private fun ListRow(list: ShoppingList, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .testTag("listRow")
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 16.dp),
     ) {
@@ -147,6 +149,7 @@ fun NameInputDialog(
                 onValueChange = { name = it },
                 label = { Text(nameLabel) },
                 singleLine = true,
+                modifier = Modifier.testTag("nameField"),
             )
         },
         confirmButton = {

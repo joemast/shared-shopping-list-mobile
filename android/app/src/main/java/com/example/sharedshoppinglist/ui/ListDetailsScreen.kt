@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -157,7 +158,11 @@ private fun ItemRow(
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Checkbox(checked = item.bought, onCheckedChange = { onToggle() })
+        Checkbox(
+            checked = item.bought,
+            onCheckedChange = { onToggle() },
+            modifier = Modifier.testTag("itemBoughtToggle"),
+        )
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = item.name,
@@ -165,7 +170,11 @@ private fun ItemRow(
                 textDecoration = if (item.bought) TextDecoration.LineThrough else null,
             )
             item.quantity?.let { quantity ->
-                Text(text = quantity, style = MaterialTheme.typography.bodySmall)
+                Text(
+                    text = quantity,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.testTag("itemQuantityText"),
+                )
             }
         }
         IconButton(onClick = onEdit) {
@@ -199,12 +208,14 @@ private fun ItemInputDialog(
                     onValueChange = { name = it },
                     label = { Text("Name") },
                     singleLine = true,
+                    modifier = Modifier.testTag("itemNameField"),
                 )
                 OutlinedTextField(
                     value = quantity,
                     onValueChange = { quantity = it },
                     label = { Text("Quantity (optional)") },
                     singleLine = true,
+                    modifier = Modifier.testTag("itemQuantityField"),
                 )
             }
         },
