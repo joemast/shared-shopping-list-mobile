@@ -36,3 +36,7 @@ kotlin-js-store/
 # JVM crash dumps / transient build logs
 hs_err_pid*.log
 *.log
+
+# VPS deploy state (written on the host by deploy/deploy.sh)
+deploy/.hermes-baseline.txt
+deploy/.previous-revision
